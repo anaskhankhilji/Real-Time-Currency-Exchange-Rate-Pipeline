@@ -41,3 +41,91 @@ Timeout: 30–60 seconds
 | oer_base_url      | API endpoint           | [https://openexchangerates.org/api/latest.json](https://openexchangerates.org/api/latest.json) |
 | oer_app_id        | API key                | your_app_id                                                                                    |
 | oer_base_currency | Base currency          | USD                                                                                            |
+
+
+# AWS Secrets Manager
+
+{
+  "fusion_snowflake": {
+    "username": "your_user",
+    "password": "your_password",
+    "account_name": "your_account.region"
+  }
+}
+
+# IAM Permissions
+
+Attach these policies to Lambda:
+
+AmazonS3FullAccess
+AWSLambda_FullAccess
+AmazonEventBridgeFullAccess
+SecretsManagerReadWrite
+
+# Snowflake Setup
+
+Run snowflake/setup.sql to create:
+
+CURRENCY_DB (Database)
+CURRENCY (Schema)
+EXCHANGE_RATES_RAW — Raw JSON storage
+EXCHANGE_RATES_STG — Flattened staging table
+EXCHANGE_RATES — Final analytics table
+SP_EXCHANGE_RATE_LOADING — Data pipeline procedure
+
+# Data Processing Flow
+Stored Procedure Logic:
+
+Load raw JSON into RAW table
+Flatten JSON into STAGING
+Merge into FINAL table (deduplicated)
+
+# Validation Queries
+
+-- Raw data
+SELECT * FROM CURRENCY.EXCHANGE_RATES_RAW;
+
+-- Staging data
+SELECT * FROM CURRENCY.EXCHANGE_RATES_STG;
+
+-- Final table
+SELECT * FROM CURRENCY.EXCHANGE_RATES;
+
+-- Hourly validation
+SELECT timestamp_utc, COUNT(*) AS currency_pairs
+FROM CURRENCY.EXCHANGE_RATES
+GROUP BY timestamp_utc
+ORDER BY timestamp_utc DESC;
+
+# Tech Stack
+
+| Layer          | Technology               |
+| -------------- | ------------------------ |
+| Compute        | AWS Lambda (Python 3.11) |
+| Scheduling     | AWS EventBridge          |
+| Storage        | Amazon S3                |
+| Secrets        | AWS Secrets Manager      |
+| Data Warehouse | Snowflake                |
+| Data Source    | OpenExchangeRates API    |
+
+# Outcomes
+Fully automated, production-ready pipeline
+Clean and scalable data architecture
+Real-time exchange rate analytics
+Hands-on experience with AWS + Snowflake integration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
